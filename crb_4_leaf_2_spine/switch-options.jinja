@@ -1,0 +1,10 @@
+{% set switch_options = property_sets.system_properties.switch_options %}
+
+switch-options {
+    vtep-source-interface {{ switch_options.vtep_source }};
+    route-distinguisher {{ switch_options.rd }};
+    vrf-target {
+        target:{{ switch_options.vrf_target }};
+        auto;
+    }
+}
