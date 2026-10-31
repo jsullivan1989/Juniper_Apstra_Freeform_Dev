@@ -1,0 +1,57 @@
+{% set hostname = property_sets.system_properties.hostname %}
+{% set chassis_device_count = property_sets.system_properties.chassis_device_count %}
+
+{% include "interfaces.jinja" %}
+
+{% include "vlans.jinja" %}
+
+{% include "policy.jinja" %}
+
+{% include "bgp-and-evpn.jinja" %}
+
+{% include "switch-options.jinja" %}
+
+{% include "routing-options.jinja" %}
+
+system {
+    host-name {{ hostname }};
+    root-authentication {
+        encrypted-password "$6$OWnpR5nW$J8WCRH0Fflv0tV6peeHfzZq8bz8BUp8CRyO/pYzuQFe5v8sMvYU6cLZHETSHlqSZX1BUng8xc6kcaJ/RuLe6p."; ## SECRET-DATA
+    }
+    login {
+        user admin {
+            uid 2000;
+            class super-user;
+            authentication {
+                encrypted-password "$6$OWnpR5nW$J8WCRH0Fflv0tV6peeHfzZq8bz8BUp8CRyO/pYzuQFe5v8sMvYU6cLZHETSHlqSZX1BUng8xc6kcaJ/RuLe6p."; ## SECRET-DATA
+            }
+        }
+    }
+    services {
+        netconf {
+            ssh;
+        }
+        ssh {
+            root-login allow;
+        }
+    }
+    management-instance;
+}
+routing-instances {
+    mgmt_junos {
+        routing-options {
+            static {
+                route 0.0.0.0/0 next-hop 10.0.0.2;
+            }
+        }
+    }
+}
+{% if property_sets.system_properties.has_ae_intf %}
+chassis {
+    aggregated-devices {
+        ethernet {
+            device-count {{ chassis_device_count }};
+        }
+    }
+}
+{% endif %}
