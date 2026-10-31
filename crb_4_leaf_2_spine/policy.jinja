@@ -1,0 +1,15 @@
+{% set interfaces = property_sets.system_properties.interfaces %}
+policy-options {
+    replace: policy-statement allow-loopback {
+        from {
+            interface lo0.0;
+            route-filter {{ interfaces.lo0.address }} exact;
+        }
+        then accept;
+    }
+    policy-statement ecmp {
+        then {
+            load-balance per-packet;
+        }
+    }
+}
