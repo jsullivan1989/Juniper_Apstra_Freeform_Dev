@@ -1,0 +1,17 @@
+{% set vlans = property_sets.system_properties.vlans %}
+vlans {
+    {% for vlan in vlans %}
+        replace: {{ vlans[vlan].name }} {
+            vlan-id {{ vlan }};
+            {% if property_sets.system_properties.crb_enabled %}
+            l3-interface irb.{{ vlans[vlan].irb.unit }};
+            {% endif %}
+            vxlan {
+                vni {{ vlans[vlan].vni }};
+            }
+        }
+    {% endfor %}
+        default {
+            vlan-id 1;
+        }
+}
