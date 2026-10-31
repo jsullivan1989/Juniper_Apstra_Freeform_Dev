@@ -1,0 +1,72 @@
+{% set interfaces = property_sets.system_properties.interfaces %}
+{% set vlans = property_sets.system_properties.vlans %}
+interfaces {
+    {% for ifname, ifprops in interfaces.items() %}
+    {% if 'ae_member_of' in ifprops %}
+    replace: {{ ifname }} {
+        gigether-options {
+            802.3ad {{ ifprops.ae_member_of }};
+        }
+    }
+    {% elif ifname.startswith('ae') %}
+    replace: {{ ifname }} {
+        esi {
+            auto-derive {
+                type-1-lacp;
+            }
+            all-active;
+        }
+        aggregated-ether-options {
+            lacp {
+                {{ ifprops.lag.mode }};
+                system-id {{ ifprops.lag.system_id }};
+            }
+        }
+        unit 0 {
+            family ethernet-switching {
+                interface-mode {{ ifprops.ethernet_switching.mode | default('access') }};
+                vlan {
+                    members {{ ifprops.ethernet_switching.vlan }};
+                }
+            }
+        }
+    }
+    {% elif ifprops.l3 == "yes" and ifprops.irb == "no" %}
+    replace: {{ ifname }} {
+        unit 0 {
+            family inet {
+                address {{ ifprops.address }};
+            }
+        }
+    }
+    {% else %}
+    replace: {{ ifname }} {
+        unit 0 {
+            family ethernet-switching {
+                interface-mode {{ ifprops.ethernet_switching.mode | default('access') }};
+                vlan {
+                    members {{ ifprops.ethernet_switching.vlan }};
+                }
+            }
+        }
+    }
+    {% endif %}
+    {% endfor %}
+    {% if property_sets.system_properties.crb_enabled %}
+    replace: irb {
+        {% for vlan in vlans %}
+        unit {{ vlans[vlan].irb.unit }} {
+            proxy-macip-advertisement;
+            {% if vlans[vlan].irb.virtual_gateway_accept_data | default(false) %}
+            virtual-gateway-accept-data;
+            {% endif %}
+            family inet {
+                address {{ vlans[vlan].irb.address }} {
+                    virtual-gateway-address {{ vlans[vlan].irb.virtual_gateway }};
+                }
+            }
+        }
+        {% endfor %}
+    }
+    {% endif %}
+}
