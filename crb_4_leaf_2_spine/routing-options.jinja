@@ -1,0 +1,8 @@
+{% set bgp = property_sets.system_properties.bgp %}
+routing-options {
+    forwarding-table {
+        export ecmp;
+    }
+    router-id {{ bgp.router_id }};
+    autonomous-system {{ bgp.as_number }};
+}
