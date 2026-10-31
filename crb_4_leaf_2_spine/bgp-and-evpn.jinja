@@ -1,0 +1,49 @@
+{% set bgp = property_sets.system_properties.bgp %}
+{% set interfaces = property_sets.system_properties.interfaces %}
+{% set vlans = property_sets.system_properties.vlans %}
+protocols {
+    replace: evpn {
+        vni-options {
+        {% for vlan in vlans %}
+        vni {{ vlans[vlan].vni}} {
+            vrf-target target:{{ vlans[vlan].rt }};
+            }
+        {% endfor %}
+        }
+        encapsulation vxlan;
+        replace: extended-vni-list [{% for vlan in vlans %} {{ vlans[vlan].vni }} {% endfor %}];
+    }
+    replace: bgp {
+        group underlay {
+            type external;
+            export allow-loopback;
+            multipath {
+                multiple-as;
+            }
+            {% for neighbor in bgp.neighbors %}
+            neighbor {{ neighbor }} {
+                family inet {
+                    unicast;
+                }
+                peer-as {{ bgp.neighbors[neighbor].remote_as}};
+            }
+            {% endfor %}
+        }
+        group overlay {
+            type external;
+            multihop{% if property_sets.system_properties.crb_enabled %} {
+                no-nexthop-change;
+            }{% endif %};
+            local-address {{ bgp.router_id }};
+            multipath;
+            {% for neighbor in bgp.neighbors %}
+            neighbor {{ bgp.neighbors[neighbor].loopback }} {
+                family evpn {
+                    signaling;
+                }
+                peer-as {{ bgp.neighbors[neighbor].remote_as}};
+            }
+            {% endfor %}
+        }
+    }
+}
