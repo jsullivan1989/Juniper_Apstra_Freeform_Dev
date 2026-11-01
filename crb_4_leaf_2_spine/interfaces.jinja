@@ -1,3 +1,4 @@
+
 {% set interfaces = property_sets.system_properties.interfaces %}
 {% set vlans = property_sets.system_properties.vlans %}
 interfaces {
@@ -30,14 +31,24 @@ interfaces {
                 }
             }
         }
+        mtu 9192;
     }
-    {% elif ifprops.l3 == "yes" and ifprops.irb == "no" %}
+    {% elif ifprops.l3 == "yes" and ifprops.irb == "no" and ifname.startswith('lo0') %}
     replace: {{ ifname }} {
         unit 0 {
             family inet {
                 address {{ ifprops.address }};
             }
         }
+    }
+    {% elif ifprops.l3 == "yes" and ifprops.irb == "no" and not ifname.startswith('lo0') %}
+    replace: {{ ifname }} {
+        unit 0 {
+            family inet {
+                address {{ ifprops.address }};
+            }
+        }
+        mtu 9192;
     }
     {% else %}
     replace: {{ ifname }} {
@@ -49,6 +60,7 @@ interfaces {
                 }
             }
         }
+        mtu 9192;
     }
     {% endif %}
     {% endfor %}
