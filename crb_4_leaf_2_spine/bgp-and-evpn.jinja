@@ -1,6 +1,7 @@
 {% set bgp = property_sets.system_properties.bgp %}
 {% set interfaces = property_sets.system_properties.interfaces %}
 {% set vlans = property_sets.system_properties.vlans %}
+{% set hostname = property_sets.system_properties.hostname %}
 protocols {
     replace: evpn {
         vni-options {
@@ -16,7 +17,12 @@ protocols {
     replace: bgp {
         group underlay {
             type external;
+            {% if hostname.startswith('spine') %}
+            import AOS-ADD-UNDERLAY-NOREADV;
             export allow-loopback;
+            {% else %}
+            export [ AOS-UNDERLAY-EXPORT-TO-SPINES allow-loopback ];
+            {% endif %}
             multipath {
                 multiple-as;
             }
@@ -31,6 +37,11 @@ protocols {
         }
         group overlay {
             type external;
+            {% if hostname.startswith('spine') %}
+            import AOS-ADD-OVERLAY-NO-READV;
+            {% else %}
+            export AOS-OVERLAY-EXPORT-TO-SPINES;
+            {% endif %}
             multihop{% if property_sets.system_properties.crb_enabled %} {
                 no-nexthop-change;
             }{% endif %};
