@@ -10,7 +10,7 @@ This is an ongoing repository of custom scripts and templates used for various F
 - **Jinja templates**: builds the config by referencing property set data
 - **Terraform**: 
 - **GraphQL**
-- 
+
 ## The lab
  
 Lab requirements:
