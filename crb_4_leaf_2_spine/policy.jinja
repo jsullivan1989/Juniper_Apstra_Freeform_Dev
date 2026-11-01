@@ -1,4 +1,5 @@
 {% set interfaces = property_sets.system_properties.interfaces %}
+{% set hostname = property_sets.system_properties.hostname %}
 policy-options {
     replace: policy-statement allow-loopback {
         from {
@@ -12,4 +13,46 @@ policy-options {
             load-balance per-packet;
         }
     }
+    {% if hostname.startswith('spine') %}
+    policy-statement AOS-ADD-UNDERLAY-NOREADV {
+        term 1 {
+            from {
+                route-filter 192.168.1.0/24 prefix-length-range /32-/32;
+            }
+            then {
+                community add NO-LEAF-READV-LO0;
+                accept;
+            }
+        }
+        term 2 {
+            then accept;
+        }
+    }
+    policy-statement AOS-ADD-OVERLAY-NO-READV {
+        term 1 {
+            then {
+                community add NO-LEAF-READV-EVPN;
+                accept;
+            }
+        }
+    }
+    {% elif hostname.startswith('leaf') %}
+    policy-statement AOS-UNDERLAY-EXPORT-TO-SPINES {
+        term 1 {
+            from community NO-LEAF-READV-LO0;
+            then reject;
+        }
+    }
+    policy-statement AOS-OVERLAY-EXPORT-TO-SPINES {
+        term 1 {
+            from community NO-LEAF-READV-EVPN;
+            then reject;
+        }
+        term 2 {
+            then accept;
+        }
+    }
+    {% endif %}
+    community NO-LEAF-READV-LO0 members 0:15;
+    community NO-LEAF-READV-EVPN members 0:14;
 }
