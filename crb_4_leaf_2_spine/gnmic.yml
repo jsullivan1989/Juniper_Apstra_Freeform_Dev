@@ -1,0 +1,97 @@
+# gnmic config for streaming BGP data.  Uses default vJunos-switch containerlab admin credentials
+
+username: admin
+password: admin@123
+insecure: false
+skip-verify: true
+timeout: 10s
+
+# To use the TLS listener Apstra already configured (port 32767) add the below two lines
+# AOS local-certificate installed already to communicate with Apstra
+#   insecure: false
+#   skip-verify: true
+# and use target addresses like 192.168.122.x:32767
+
+common_junos: &common_junos
+  subscriptions:
+    - junos-intf-stats
+    - junos-bgp
+
+targets:
+  leaf1:
+    address: 192.168.122.101:32767
+  leaf2:
+    address: 192.168.122.102:32767
+  leaf3:
+    address: 192.168.122.103:32767
+  leaf4:
+    address: 192.168.122.104:32767
+  spine1:
+    address: 192.168.122.111:32767
+  spine2:
+    address: 192.168.122.112:32767
+subscriptions:
+  junos-intf-stats:
+    mode: stream
+    stream-mode: sample
+    sample-interval: 5s
+    paths:
+      - /interfaces/interface/state/counters
+  junos-bgp:
+    mode: stream
+    stream-mode: sample
+    sample-interval: 5s
+    paths:
+      - /network-instances/network-instance/protocols/protocol/bgp/neighbors/neighbor/state
+      - /network-instances/network-instance/protocols/protocol/bgp/neighbors/neighbor/afi-safis/afi-safi/state
+
+outputs:
+  prom:
+    type: prometheus
+    listen: ":9804"
+    event-processors:
+      - bgp-state-to-int
+  debug_file:
+    type: file
+    filename: /tmp/gnmic-logs.json
+
+subscription-outputs:
+  junos-intf-stats:
+    - prom
+    - debug_file
+  junos-bgp:
+    - prom
+    - debug_file
+
+processors:
+  bgp-state-to-int:
+    event-strings:
+      paths:
+        - "^network-instances/.*/protocols/.*/bgp/neighbors/.*/state$"
+      value-names:
+        - "session-state$"
+      transforms:
+        - replace:
+            apply-on: "value"
+            old: "ESTABLISHED"
+            new: "5"
+        - replace:
+            apply-on: "value"
+            old: "OPENCONFIRM"
+            new: "4"
+        - replace:
+            apply-on: "value"
+            old: "OPENSENT"
+            new: "3"
+        - replace:
+            apply-on: "value"
+            old: "ACTIVE"
+            new: "2"
+        - replace:
+            apply-on: "value"
+            old: "CONNECT"
+            new: "1"
+        - replace:
+            apply-on: "value"
+            old: "IDLE"
+            new: "0"
