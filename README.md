@@ -9,7 +9,10 @@ This is an ongoing repository of custom scripts and templates used for various F
 - **JSON property sets**: per-device data 
 - **Jinja templates**: builds the config by referencing property set data
 - **Terraform**: Used to provision racks, resources, blueprints, VNIs, IP Pools, templates, logical-devices, and Interface Maps
-- **GraphQL**
+- **GraphQL**: Infrastructure relationship based querying within Apstra
+- **gNMIc**: Collects streaming telemetry from Spine/Leaf EVPN / VXLAN environments
+- **Prometheus**: Stores data as time series and answers queries
+- **Grafana**: Display layer.  Does not store anything, just asks Prometheus for data and draws it as dashboards, tables, gauges, and graphs.
 
 ## The lab
  
