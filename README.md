@@ -8,7 +8,7 @@ This is an ongoing repository of custom scripts and templates used for various F
  
 - **JSON property sets**: per-device data 
 - **Jinja templates**: builds the config by referencing property set data
-- **Terraform**: 
+- **Terraform**: Used to provision racks, resources, blueprints, VNIs, IP Pools, templates, logical-devices, and Interface Maps
 - **GraphQL**
 
 ## The lab
